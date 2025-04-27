@@ -136,6 +136,37 @@ const addHospital = async (req, res) => {
     }
 };
 
+// get hospitals
+const getHospitals = async (req, res) => {
+    try {
+        const { hospitalId, limit = 10, offset = 0 } = req.body;
+
+        const condition = { delete: false }; // Only active hospitals
+        
+        if (hospitalId) {
+            condition._id = hospitalId;
+        }
+
+        const { data: hospitals, totalRecords } = await selectdatawithjoin({
+            Model: hospitalModel,
+            condition,
+            fields: 'ownerName socialMediaLinks name email mobileNumber address profile',
+            limit: parseInt(limit),
+            offset: parseInt(offset),
+            sortBy: { create: -1 }
+        });
+
+        return successResponse(res, 'Hospitals fetched successfully', {
+            totalRecords,
+            hospitals
+        });
+    } catch (error) {
+        console.error('Error fetching hospitals:', error);
+        return errorResponse(res, 'Error fetching hospitals');
+    }
+};
+
+
 // add doctor
 const addDoctor = async (req, res) => {
     try {
@@ -164,7 +195,6 @@ const addDoctor = async (req, res) => {
         }
 
         const doctorData = {
-            userId,
             name,
             email,
             mobileNumber,
@@ -188,6 +218,45 @@ const addDoctor = async (req, res) => {
     }
 };
 
+// get doctors
+const getDoctors = async (req, res) => {
+    try {
+        const { doctorId, hospitalId, limit = 10, offset = 0 } = req.body;
+
+        const condition = { delete: false }; // Only active doctors
+        
+        if (doctorId) {
+            condition._id = doctorId;
+        }
+        if (hospitalId) {
+            condition.hospitalId = hospitalId;
+        }
+
+        const { data: doctors, totalRecords } = await selectdatawithjoin({
+            Model: doctorModel,
+            condition,
+            fields: 'name email mobileNumber specializationId degreeId hospitalId appointmentCharge experience profile age gender',
+            limit: parseInt(limit),
+            offset: parseInt(offset),
+            sortBy: { create: -1 },
+            joinModel: [
+                { path: 'specializationId', select: 'name' },
+                { path: 'degreeId', select: 'name' },
+                { path: 'hospitalId', select: 'name email mobileNumber address' }
+            ]
+        });
+
+        return successResponse(res, 'Doctors fetched successfully', {
+            totalRecords,
+            doctors
+        });
+    } catch (error) {
+        console.error('Error fetching doctors:', error);
+        return errorResponse(res, 'Error fetching doctors');
+    }
+};
+
+
 // add appointment
 const addAppointment = async (req, res) => {
     let userId = req.body.userId
@@ -201,6 +270,12 @@ const addAppointment = async (req, res) => {
     let isEmergency = req.body.isEmergency
 
     try {
+
+        let durationData = await selectdatv2(settingModel, { key: "Duration" }, "value");
+        // console.log('====================================');
+        // console.log('durationData', durationData.data[0].value);
+        // console.log('====================================');
+
         let appointmentfield = {
             userId,
             hospitalId,
@@ -208,7 +283,7 @@ const addAppointment = async (req, res) => {
         let appointmentDetailfield = {
             userId,
             disease,
-            duration,
+            duration: durationData.data[0].value,
             doctorId,
             appointmentTime,
             appointmentDate,
@@ -388,7 +463,7 @@ const updateAppointmentTimeByType = async (req, res) => {
 
         // Find the appointmentDetail
         const appointmentDetail = await appointmentdetailModel.findOne({
-            _id:appointmentId,
+            _id: appointmentId,
             delete: false
         });
 
@@ -402,7 +477,7 @@ const updateAppointmentTimeByType = async (req, res) => {
         // Prepare the time
         let finalTime = time;
         if (!finalTime) {
-            finalTime = new Date().toLocaleTimeString('en-US', { hour12: false }); 
+            finalTime = new Date().toLocaleTimeString('en-US', { hour12: false });
             // Example format: "14:45:00"
         }
 
@@ -444,7 +519,9 @@ module.exports = {
     adminProfile,
     addAppointment,
     addHospital,
+    getHospitals,
     addDoctor,
+    getDoctors,
     getAppointmentsWithDetails,
     addeditSetting,
     getSettings,

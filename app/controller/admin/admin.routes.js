@@ -37,12 +37,18 @@ router.post('/addeditadmin', uploadProfile.single('profile'), validate(adminVali
 router.post('/login', validate(adminValidation.login), adminController.login);
 router.post('/adminprofile', adminController.adminProfile);
 
-router.post('/addappointment', adminController.addAppointment);
+
 router.post('/addhospital', adminController.addHospital); // corrected the route to lowercase
-router.post('/adddoctor', adminController.addDoctor); // corrected the route to lowercase
+router.post('/gethospitals', adminController.getHospitals); // corrected the route to lowercase
+
+router.post('/addappointment', adminController.addAppointment);
 router.post('/getappointmentswithdetails', adminController.getAppointmentsWithDetails); // corrected the route to lowercase
+
 router.post('/addeditsetting', adminController.addeditSetting); // corrected the route to lowercase
 router.post('/getsettings', adminController.getSettings); // corrected the route to lowercase
 router.post('/updateappointmenttimebytype', adminController.updateAppointmentTimeByType); // corrected the route to lowercase
+
+router.post('/adddoctor', adminController.addDoctor); // corrected the route to lowercase
+router.post('/getdoctors', adminController.getDoctors); // corrected the route to lowercase
 
 module.exports = router;
