@@ -14,7 +14,7 @@ const { successResponse, errorResponse, saveModel, selectdata, selectdatv2, upda
 
 const test = async (req, res) => {
     try {
-        return successResponse(res, 'Test api call successfully', updatedAdmin);
+        return successResponse(res, 'Test api call successfully', []);
 
     } catch (err) {
         console.log('Error in test:', err);
@@ -305,6 +305,7 @@ const addAppointment = async (req, res) => {
         if (!savedAppointment) {
             return errorResponse(res, 'Error creating appointment');
         }
+        
         appointmentDetailfield.appointmentId = savedAppointment._id;
         await saveModel(appointmentdetailModel, appointmentDetailfield);
 
@@ -447,8 +448,6 @@ const getSettings = async (req, res) => {
     }
 };
 
-
-
 // update appointment time by type
 const updateAppointmentTimeByType = async (req, res) => {
     try {
@@ -535,3 +534,7 @@ module.exports = {
     getSettings,
     updateAppointmentTimeByType
 }
+
+
+
+// doctor pan unavailaba rese tyare mare appointment user ne notify karava na ane update karava na tena sedual
