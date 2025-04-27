@@ -3,7 +3,7 @@ const bodyParser = require('body-parser');
 const connectToMongo = require('./app/connection/db');
 const cors = require('cors');
 const app = express();
-const port = 3000;
+const port = 4000;
 
 
 // Middleware
@@ -23,5 +23,5 @@ app.get('/', (req, res) => {
 
 // Start the server
 app.listen(port, () => {
-    console.log(`Server running at http://localhost:${port}`);
+    console.log(`Example app listening on port ${port}`);
 });
