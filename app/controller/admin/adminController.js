@@ -12,6 +12,16 @@ const settingModel = require('../../model/setting');
 
 const { successResponse, errorResponse, saveModel, selectdata, selectdatv2, updateModel, selectdatawithjoin } = require('../../helper/index');
 
+const test = async (req, res) => {
+    try {
+        return successResponse(res, 'Test api call successfully', updatedAdmin);
+
+    } catch (err) {
+        console.log('Error in test:', err);
+        return errorResponse(res, 'Error in test');
+    }
+}
+
 // POST route to create or edit an admin
 const addEditAdmin = async (req, res) => {
     let adminId = req.body.adminId || "";
@@ -70,7 +80,6 @@ const addEditAdmin = async (req, res) => {
         return errorResponse(res, 'Error creating/updating admin');
     }
 }
-
 
 // login 
 const login = async (req, res) => {
@@ -142,7 +151,7 @@ const getHospitals = async (req, res) => {
         const { hospitalId, limit = 10, offset = 0 } = req.body;
 
         const condition = { delete: false }; // Only active hospitals
-        
+
         if (hospitalId) {
             condition._id = hospitalId;
         }
@@ -224,7 +233,7 @@ const getDoctors = async (req, res) => {
         const { doctorId, hospitalId, limit = 10, offset = 0 } = req.body;
 
         const condition = { delete: false }; // Only active doctors
-        
+
         if (doctorId) {
             condition._id = doctorId;
         }
@@ -384,8 +393,6 @@ const getAppointmentsWithDetails = async (req, res) => {
     }
 };
 
-
-
 // add edit setting 
 const addeditSetting = async (req, res) => {
     try {
@@ -514,6 +521,7 @@ const updateAppointmentTimeByType = async (req, res) => {
 };
 
 module.exports = {
+    test,
     addEditAdmin,
     login,
     adminProfile,

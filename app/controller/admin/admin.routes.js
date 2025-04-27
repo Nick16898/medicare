@@ -32,6 +32,7 @@ const uploadProfile = multer({ storage: adminProfile });
 router.use(express.json()); // Parses JSON requests
 router.use(authenticate); // Global authentication middleware
 
+router.get('/test', adminController.test);
 // Define the register route
 router.post('/addeditadmin', uploadProfile.single('profile'), validate(adminValidation.addEditAdmin), adminController.addEditAdmin);
 router.post('/login', validate(adminValidation.login), adminController.login);
