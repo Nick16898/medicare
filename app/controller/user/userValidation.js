@@ -15,7 +15,7 @@ const addEditUser = Joi.object({
     mobileNumber: Joi.string().optional(),
     address: Joi.string().optional(),
     dob: Joi.date().optional(),
-    gender: Joi.string().valid("MALE", "FEMALE", "OTHER").optional(),
+    gender: Joi.string().valid("MALE", "FEMALE", "OTHER").required(),
     stateId: Joi.string().optional(),
     cityId: Joi.string().optional(),
     zipCode: Joi.string().optional(),

@@ -175,7 +175,6 @@ const getHospitals = async (req, res) => {
     }
 };
 
-
 // add doctor
 const addDoctor = async (req, res) => {
     try {
@@ -264,7 +263,6 @@ const getDoctors = async (req, res) => {
         return errorResponse(res, 'Error fetching doctors');
     }
 };
-
 
 // add appointment
 const addAppointment = async (req, res) => {
