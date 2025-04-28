@@ -9,6 +9,7 @@ const appointmentdetailModel = require('../../model/appointmentdetail');
 const hospitalModel = require('../../model/hospital');
 const doctorModel = require('../../model/doctor');
 const settingModel = require('../../model/setting');
+const userModel = require('../../model/user');
 
 const { successResponse, errorResponse, saveModel, selectdata, selectdatv2, updateModel, selectdatawithjoin } = require('../../helper/index');
 
@@ -517,6 +518,42 @@ const updateAppointmentTimeByType = async (req, res) => {
     }
 };
 
+const getUserList = async (req, res) => {
+    try {
+        const { userId, stateId, cityId, limit = 10, offset = 0 } = req.body;
+
+        const condition = { delete: false }; // Only active users
+
+        if (userId) {
+            condition._id = userId;
+        }
+        if (stateId) {
+            condition.stateId = stateId;
+        }
+        if (cityId) {
+            condition.cityId = cityId;
+        }
+
+        const { data: users, totalRecords } = await selectdatawithjoin({
+            Model: userModel,
+            condition,
+            fields: 'fullName email mobileNumber gender address profile stateId cityId zipCode registerAppVersion registerOS registerDevice',
+            limit: parseInt(limit),
+            offset: parseInt(offset),
+            sortBy: { create: -1 },
+        });
+
+        return successResponse(res, 'Users fetched successfully', {
+            totalRecords,
+            users
+        });
+    } catch (error) {
+        console.error('Error fetching users:', error);
+        return errorResponse(res, 'Error fetching users');
+    }
+};
+
+
 module.exports = {
     test,
     addEditAdmin,
@@ -530,7 +567,8 @@ module.exports = {
     getAppointmentsWithDetails,
     addeditSetting,
     getSettings,
-    updateAppointmentTimeByType
+    updateAppointmentTimeByType,
+    getUserList
 }
 
 
