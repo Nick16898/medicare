@@ -13,7 +13,7 @@ const userSchema = new mongoose.Schema({
     // stateId: { type: mongoose.Schema.Types.ObjectId, ref: 'state', required: false },
     // cityId: { type: mongoose.Schema.Types.ObjectId, ref: 'city', required: false },
     zipCode: { type: String, required: false },
-    profile: { type: String, required: false },
+    profile: { type: String, required: false, default:""},
     loginOS: { type: String, required: false },
     loginAppVersion: { type: String, required: false },
     loginDevice: { type: String, required: false },

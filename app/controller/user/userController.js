@@ -18,7 +18,7 @@ const addEditUser = async (req, res) => {
     let cityId = req.body.cityId || "";
     let zipCode = req.body.zipCode || "";
     let password = req.body.password || "";
-    let profile = req.file ? `profiles/${req.file.filefullName}` : req.body.profile || "";
+    let profile = req.file ? `user/profiles/${req.file.filefullName}` : req.body.profile || "";
     let registerAppVersion = req.body.registerAppVersion || "";
     let registerOS = req.body.registerOS || "";
     let registerDevice = req.body.registerDevice || "";

@@ -546,7 +546,7 @@ const getUserList = async (req, res) => {
         return successResponse(res, 'Users fetched successfully', {
             totalRecords,
             users
-        });
+        }, true);
     } catch (error) {
         console.error('Error fetching users:', error);
         return errorResponse(res, 'Error fetching users');

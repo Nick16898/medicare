@@ -8,7 +8,7 @@ const connectToMongo = require('../connection/db');
  * @returns {object} - The JSON response
  */
 
-let bassUrl = 'http://localhost:3000/';
+let bassUrl = 'https://medicare-mllp.onrender.com/medicare/uploads/';
 
 const successResponse = (res, message = "success", data = [], baseUrl = false) => {
     let field = { status: 200, };
