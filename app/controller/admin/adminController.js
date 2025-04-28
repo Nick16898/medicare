@@ -147,9 +147,38 @@ const addHospital = async (req, res) => {
 };
 
 // get hospitals
+// const getHospitals = async (req, res) => {
+//     try {
+//         const { hospitalId, limit = 10, offset = 0 } = req.body;
+
+//         const condition = { delete: false }; // Only active hospitals
+
+//         if (hospitalId) {
+//             condition._id = hospitalId;
+//         }
+
+//         const { data: hospitals, totalRecords } = await selectdatawithjoin({
+//             Model: hospitalModel,
+//             condition,
+//             fields: 'ownerName socialMediaLinks name email mobileNumber address profile',
+//             limit: parseInt(limit),
+//             offset: parseInt(offset),
+//             sortBy: { create: -1 }
+//         });
+
+//         return successResponse(res, 'Hospitals fetched successfully', {
+//             totalRecords,
+//             hospitals
+//         });
+//     } catch (error) {
+//         console.error('Error fetching hospitals:', error);
+//         return errorResponse(res, 'Error fetching hospitals');
+//     }
+// };
+
 const getHospitals = async (req, res) => {
     try {
-        const { hospitalId, limit = 10, offset = 0 } = req.body;
+        const { hospitalId, latitude, longitude, distance = 10, limit = 10, offset = 0 } = req.body;
 
         const condition = { delete: false }; // Only active hospitals
 
@@ -157,24 +186,63 @@ const getHospitals = async (req, res) => {
             condition._id = hospitalId;
         }
 
-        const { data: hospitals, totalRecords } = await selectdatawithjoin({
-            Model: hospitalModel,
-            condition,
-            fields: 'ownerName socialMediaLinks name email mobileNumber address profile',
-            limit: parseInt(limit),
-            offset: parseInt(offset),
-            sortBy: { create: -1 }
-        });
+        // If latitude and longitude are provided, use geolocation query
+        if (latitude && longitude) {
+            const hospitals = await hospitalModel.aggregate([
+                {
+                    $geoNear: {
+                        near: { type: "Point", coordinates: [parseFloat(longitude), parseFloat(latitude)] },
+                        distanceField: "distance",
+                        maxDistance: parseFloat(distance) * 1000, // convert km to meters
+                        spherical: true,
+                        query: condition
+                    }
+                },
+                { $sort: { distance: 1 } }, // nearest first
+                { $skip: parseInt(offset) },
+                { $limit: parseInt(limit) },
+                {
+                    $project: {
+                        ownerName: 1,
+                        socialMediaLinks: 1,
+                        name: 1,
+                        email: 1,
+                        mobileNumber: 1,
+                        address: 1,
+                        profile: 1,
+                        distance: 1
+                    }
+                }
+            ]);
 
-        return successResponse(res, 'Hospitals fetched successfully', {
-            totalRecords,
-            hospitals
-        });
+            const totalRecords = hospitals.length;
+
+            return successResponse(res, 'Hospitals fetched successfully', {
+                totalRecords,
+                hospitals
+            });
+        } else {
+            // fallback normal if lat/long not provided
+            const { data: hospitals, totalRecords } = await selectdatawithjoin({
+                Model: hospitalModel,
+                condition,
+                fields: 'ownerName socialMediaLinks name email mobileNumber address profile',
+                limit: parseInt(limit),
+                offset: parseInt(offset),
+                sortBy: { create: -1 }
+            });
+
+            return successResponse(res, 'Hospitals fetched successfully', {
+                totalRecords,
+                hospitals
+            });
+        }
     } catch (error) {
         console.error('Error fetching hospitals:', error);
         return errorResponse(res, 'Error fetching hospitals');
     }
 };
+
 
 // add doctor
 const addDoctor = async (req, res) => {
