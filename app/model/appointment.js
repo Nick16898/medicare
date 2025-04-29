@@ -6,8 +6,8 @@ const appointmentSchema = new mongoose.Schema({
     doctorId: { type: mongoose.Schema.Types.ObjectId, ref: 'doctor', required: false },
     hospitalId: { type: mongoose.Schema.Types.ObjectId, ref: 'hospital', required: false },
 
-    fullName: { type: String, required: false },
-    mobileNumber: { type: String, required: false },
+    fullName: { type: String, required: false, default: '' },
+    mobileNumber: { type: String, required: false, default: '' },
 
     amount: { type: String, required: false },
     payableAmount: { type: String, required: false },
