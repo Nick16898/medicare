@@ -424,7 +424,7 @@ const getAppointmentsWithDetails = async (req, res) => {
             joinModel: [
                 {
                     path: 'appointmentId',
-                    select: 'amount payableAmount create userId doctorId hospitalId',
+                    select: 'amount payableAmount create userId doctorId hospitalId mobileNumber fullName',
                     populate: [
                         { path: 'userId', select: 'fullName email mobileNumber gender' },
                         { path: 'doctorId', select: 'name email mobileNumber specializationId degreeId hospitalId appointmentCharge experience' },
