@@ -335,8 +335,10 @@ const getDoctors = async (req, res) => {
 
 // add appointment
 const addAppointment = async (req, res) => {
-    let userId = req.body.userId
-    let doctorId = req.body.doctorId
+    let userId = req.body.userId 
+    let mobilenumber = req.body.mobilenumber
+    let fullName = req.body.fullName || ""
+    let doctorId = req.body.doctorId || ""
     let hospitalId = req.body.hospitalId
     let appointmentuserId = req.body.appointmentuserId || ""
     let duration = req.body.duration || ""
@@ -347,13 +349,32 @@ const addAppointment = async (req, res) => {
 
     try {
 
+        if(!fullName){
+            return errorResponse(res, 'Full name is required');
+        }
+        if(!mobilenumber){
+            return errorResponse(res, 'Mobile number is required');
+        }
+
         let durationData = await selectdatv2(settingModel, { key: "Duration" }, "value");
-        // console.log('====================================');
-        // console.log('durationData', durationData.data[0].value);
-        // console.log('====================================');
+    
+        let checkMobileNumber = await userModel.findOne({ mobileNumber: mobilenumber, delete: false });
+        if (!checkMobileNumber) {
+            // add usefr if not exist
+            let userField = {
+                fullName,
+                mobileNumber: mobilenumber,
+            }
+            let user = await saveModel(userModel, userField);
+            userId = user._id;
+        }else{
+            userId = checkMobileNumber._id;
+        }
 
         let appointmentfield = {
             userId,
+            mobilenumber,
+            fullName,
             hospitalId,
         };
         let appointmentDetailfield = {
@@ -364,7 +385,7 @@ const addAppointment = async (req, res) => {
             appointmentTime,
             appointmentDate,
             isEmergency,
-            appointmentuserId
+            ...(appointmentuserId && {appointmentuserId:appointmentuserId})
         }
 
         const savedAppointment = await saveModel(appointmentModel, appointmentfield);

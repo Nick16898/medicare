@@ -2,11 +2,11 @@ const mongoose = require('mongoose');
 
 const userSchema = new mongoose.Schema({
     fullName: { type: String, required: false },
-    email: { type: String, required: true, unique: true },
+    email: { type: String, required: false, unique: false, default: "" },
     password: { type: String, required: false },
     mobileNumber: { type: String, required: false },
     dob: { type: Date, required: false },
-    gender: { type: String, enum: ["MALE", "FEMALE", "OTHER"], required: false },
+    gender: { type: String, enum: ["MALE", "FEMALE", "OTHER"], required: false, default:"MALE"},
     address: { type: String, required: false },
     stateId: { type: String, required: false },
     cityId: { type: String, required: false },
