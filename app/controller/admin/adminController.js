@@ -419,10 +419,24 @@ const deleteAppointment = async (req, res) => {
         if (!appointment) {
             return errorResponse(res, 'Appointment not found');
         }
-
+        
         // Soft delete the appointment
         appointment.delete = true;
         await appointment.save();
+
+        // delete appointment details where appointmentId is appointmentId
+        await appointmentdetailModel.updateMany(
+            { appointmentId },
+            { $set: { delete: true } }
+        );
+
+
+        // Soft delete the appointment details
+        await appointmentdetailModel.updateMany(
+            { appointmentId },
+            { $set: { delete: true } }
+        );
+
 
         return successResponse(res, 'Appointment deleted successfully', []);
 
@@ -459,7 +473,7 @@ const getAppointmentsWithDetails = async (req, res) => {
                     ]
                 }
             ],
-            fields: "duration appointmentTime appointmentDate inTime outTime disease isEmergency",
+            fields: "duration appointmentTime appointmentDate inTime outTime disease isEmergency delete",
             sortBy: { '_id': -1 },
         });
 
