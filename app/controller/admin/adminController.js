@@ -335,7 +335,7 @@ const getDoctors = async (req, res) => {
 
 // add appointment
 const addAppointment = async (req, res) => {
-    let userId = req.body.userId 
+    let userId = req.body.userId
     let mobilenumber = req.body.mobilenumber
     let fullName = req.body.fullName || ""
     let doctorId = req.body.doctorId || ""
@@ -345,19 +345,19 @@ const addAppointment = async (req, res) => {
     let disease = req.body.disease || ""
     let appointmentDate = req.body.appointmentDate || ""
     let appointmentTime = req.body.appointmentTime || ""
-    let isEmergency = req.body.isEmergency
+    let isEmergency = req.body.isEmergency || false
 
     try {
 
-        if(!fullName){
+        if (!fullName) {
             return errorResponse(res, 'Full name is required');
         }
-        if(!mobilenumber){
+        if (!mobilenumber) {
             return errorResponse(res, 'Mobile number is required');
         }
 
         let durationData = await selectdatv2(settingModel, { key: "Duration" }, "value");
-    
+
         let checkMobileNumber = await userModel.findOne({ mobileNumber: mobilenumber, delete: false });
         if (!checkMobileNumber) {
             // add usefr if not exist
@@ -367,7 +367,7 @@ const addAppointment = async (req, res) => {
             }
             let user = await saveModel(userModel, userField);
             userId = user._id;
-        }else{
+        } else {
             userId = checkMobileNumber._id;
         }
 
@@ -385,7 +385,7 @@ const addAppointment = async (req, res) => {
             appointmentTime,
             appointmentDate,
             isEmergency,
-            ...(appointmentuserId && {appointmentuserId:appointmentuserId})
+            ...(appointmentuserId && { appointmentuserId: appointmentuserId })
         }
 
         const savedAppointment = await saveModel(appointmentModel, appointmentfield);
@@ -393,7 +393,7 @@ const addAppointment = async (req, res) => {
         if (!savedAppointment) {
             return errorResponse(res, 'Error creating appointment');
         }
-        
+
         appointmentDetailfield.appointmentId = savedAppointment._id;
         await saveModel(appointmentdetailModel, appointmentDetailfield);
 
@@ -402,6 +402,33 @@ const addAppointment = async (req, res) => {
     } catch (error) {
         console.error('Error adding appointment:', error);
         return errorResponse(res, 'Error adding appointment');
+    }
+}
+
+
+// delete appointment
+const deleteAppointment = async (req, res) => {
+    const { appointmentId } = req.body;
+    try {
+        if (!appointmentId) {
+            return errorResponse(res, 'Appointment ID is required');
+        }
+
+        // Find the appointment and delete it
+        const appointment = await appointmentModel.findById(appointmentId);
+        if (!appointment) {
+            return errorResponse(res, 'Appointment not found');
+        }
+
+        // Soft delete the appointment
+        appointment.delete = true;
+        await appointment.save();
+
+        return successResponse(res, 'Appointment deleted successfully', []);
+
+    } catch (error) {
+        console.error('Error deleting appointment:', error);
+        return errorResponse(res, 'Error deleting appointment');
     }
 }
 
@@ -643,6 +670,7 @@ const getUserList = async (req, res) => {
 };
 
 
+
 module.exports = {
     test,
     addEditAdmin,
@@ -657,7 +685,8 @@ module.exports = {
     addeditSetting,
     getSettings,
     updateAppointmentTimeByType,
-    getUserList
+    getUserList,
+    deleteAppointment
 }
 
 
