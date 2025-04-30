@@ -334,78 +334,167 @@ const getDoctors = async (req, res) => {
 };
 
 // add appointment
+// const addAppointment = async (req, res) => {
+//     let userId = req.body.userId
+//     let mobilenumber = req.body.mobilenumber
+//     let fullName = req.body.fullName || ""
+//     let doctorId = req.body.doctorId || ""
+//     let hospitalId = req.body.hospitalId
+//     let appointmentuserId = req.body.appointmentuserId || ""
+//     let duration = req.body.duration || ""
+//     let disease = req.body.disease || ""
+//     let appointmentDate = req.body.appointmentDate || ""
+//     let appointmentTime = req.body.appointmentTime || ""
+//     let isEmergency = req.body.isEmergency || false
+
+//     try {
+
+//         if (!fullName) {
+//             return errorResponse(res, 'Full name is required');
+//         }
+//         if (!mobilenumber) {
+//             return errorResponse(res, 'Mobile number is required');
+//         }
+
+//         let durationData = await selectdatv2(settingModel, { key: "Duration" }, "value");
+
+//         let checkMobileNumber = await userModel.findOne({ mobileNumber: mobilenumber, delete: false });
+//         if (!checkMobileNumber) {
+//             // add usefr if not exist
+//             let userField = {
+//                 fullName,
+//                 mobileNumber: mobilenumber,
+//             }
+//             let user = await saveModel(userModel, userField);
+//             userId = user._id;
+//         } else {
+//             userId = checkMobileNumber._id;
+//         }
+
+//         let appointmentfield = {
+//             userId,
+//             mobileNumber: mobilenumber,
+//             fullName,
+//             hospitalId,
+//             create: new Date(),
+//         };
+//         let appointmentDetailfield = {
+//             create: new Date(),
+//             userId,
+//             disease,
+//             duration: durationData.data[0].value,
+//             doctorId,
+//             appointmentTime,
+//             appointmentDate,
+//             isEmergency,
+//             ...(appointmentuserId && { appointmentuserId: appointmentuserId })
+//         }
+
+//         const savedAppointment = await saveModel(appointmentModel, appointmentfield);
+
+//         if (!savedAppointment) {
+//             return errorResponse(res, 'Error creating appointment');
+//         }
+
+//         appointmentDetailfield.appointmentId = savedAppointment._id;
+//         await saveModel(appointmentdetailModel, appointmentDetailfield);
+
+//         return successResponse(res, 'Appointment created successfully', []);
+
+//     } catch (error) {
+//         console.error('Error adding appointment:', error);
+//         return errorResponse(res, 'Error adding appointment');
+//     }
+// }
+
+
+// add appointment
 const addAppointment = async (req, res) => {
-    let userId = req.body.userId
-    let mobilenumber = req.body.mobilenumber
-    let fullName = req.body.fullName || ""
-    let doctorId = req.body.doctorId || ""
-    let hospitalId = req.body.hospitalId
-    let appointmentuserId = req.body.appointmentuserId || ""
-    let duration = req.body.duration || ""
-    let disease = req.body.disease || ""
-    let appointmentDate = req.body.appointmentDate || ""
-    let appointmentTime = req.body.appointmentTime || ""
-    let isEmergency = req.body.isEmergency || false
+    let userId = req.body.userId;
+    let mobilenumber = req.body.mobilenumber;
+    let fullName = req.body.fullName || "";
+    let doctorId = req.body.doctorId || "";
+    let hospitalId = req.body.hospitalId;
+    let appointmentuserId = req.body.appointmentuserId || "";
+    let duration = req.body.duration || "";
+    let disease = req.body.disease || "";
+    let appointmentDate = req.body.appointmentDate || "";
+    let appointmentTime = req.body.appointmentTime || "";
+    let isEmergency = req.body.isEmergency || false;
 
     try {
-
+        // Validation
         if (!fullName) {
             return errorResponse(res, 'Full name is required');
         }
         if (!mobilenumber) {
             return errorResponse(res, 'Mobile number is required');
         }
+        // if (!/^\d{10}$/.test(mobilenumber)) {
+        //     return errorResponse(res, 'Mobile number must be exactly 10 digits');
+        // }
 
         let durationData = await selectdatv2(settingModel, { key: "Duration" }, "value");
 
         let checkMobileNumber = await userModel.findOne({ mobileNumber: mobilenumber, delete: false });
+        console.log('====================================');
+        console.log(!checkMobileNumber);
+        console.log('====================================');
         if (!checkMobileNumber) {
-            // add usefr if not exist
+            // Add user if not exist
             let userField = {
                 fullName,
                 mobileNumber: mobilenumber,
-            }
+            };
             let user = await saveModel(userModel, userField);
+            console.log('====================================');
+            console.log(user);
+            console.log('====================================');
             userId = user._id;
         } else {
             userId = checkMobileNumber._id;
         }
 
+        // Create appointment
         let appointmentfield = {
             userId,
-            mobilenumber,
+            mobileNumber: mobilenumber,
             fullName,
             hospitalId,
             create: new Date(),
         };
-        let appointmentDetailfield = {
-            create: new Date(),
-            userId,
-            disease,
-            duration: durationData.data[0].value,
-            doctorId,
-            appointmentTime,
-            appointmentDate,
-            isEmergency,
-            ...(appointmentuserId && { appointmentuserId: appointmentuserId })
-        }
-
         const savedAppointment = await saveModel(appointmentModel, appointmentfield);
 
         if (!savedAppointment) {
             return errorResponse(res, 'Error creating appointment');
         }
 
-        appointmentDetailfield.appointmentId = savedAppointment._id;
+        // Create appointment detail
+        let appointmentDetailfield = {
+            create: new Date(),
+            userId,
+            disease,
+            duration: durationData.data[0]?.value || "",
+            doctorId,
+            appointmentTime,
+            appointmentDate,
+            isEmergency,
+            appointmentId: savedAppointment._id,
+        };
+
+        if (appointmentuserId) {
+            appointmentDetailfield.appointmentuserId = appointmentuserId;
+        }
+
         await saveModel(appointmentdetailModel, appointmentDetailfield);
 
         return successResponse(res, 'Appointment created successfully', []);
-
     } catch (error) {
         console.error('Error adding appointment:', error);
         return errorResponse(res, 'Error adding appointment');
     }
-}
+};
+
 
 
 // delete appointment
