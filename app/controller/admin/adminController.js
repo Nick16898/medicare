@@ -376,8 +376,10 @@ const addAppointment = async (req, res) => {
             mobilenumber,
             fullName,
             hospitalId,
+            create: new Date(),
         };
         let appointmentDetailfield = {
+            create: new Date(),
             userId,
             disease,
             duration: durationData.data[0].value,
@@ -419,7 +421,7 @@ const deleteAppointment = async (req, res) => {
         if (!appointment) {
             return errorResponse(res, 'Appointment not found');
         }
-        
+
         // Soft delete the appointment
         appointment.delete = true;
         await appointment.save();
@@ -512,6 +514,81 @@ const getAppointmentsWithDetails = async (req, res) => {
             success: true,
             message: 'Appointments fetched successfully',
             data: result
+        });
+
+    } catch (error) {
+        console.error('Error fetching appointments:', error);
+        return res.status(500).json({
+            success: false,
+            message: 'Something went wrong while fetching appointments'
+        });
+    }
+};
+
+const getAppointmentsData = async (req, res) => {
+    try {
+        const { appointmentId, limit = 10, offset = 0 } = req.query;
+
+        const appointmentFilter = { delete: false };
+        if (appointmentId) {
+            appointmentFilter._id = appointmentId;
+        }
+
+        // 1. Fetch appointments (paginated)
+        const { data: appointments, totalRecords } = await selectdatawithjoin({
+            Model: appointmentModel,
+            condition: appointmentFilter,
+            fields: 'amount payableAmount create userId doctorId hospitalId mobileNumber fullName',
+            limit: parseInt(limit),
+            offset: parseInt(offset),
+            sortBy: { _id: -1 }
+        });
+
+        if (appointments.length === 0) {
+            return res.status(404).json({
+                success: false,
+                message: 'No appointments found',
+            });
+        }
+
+        // 2. Get all appointment IDs
+        const appointmentIds = appointments.map(app => app._id);
+
+        // 3. Fetch related details
+        const { data: allDetails } = await selectdatawithjoin({
+            Model: appointmentdetailModel,
+            condition: {
+                delete: false,
+                appointmentId: { $in: appointmentIds }
+            },
+            fields: 'appointmentId duration appointmentTime appointmentDate inTime outTime disease isEmergency userId doctorId hospitalId',
+            joinModel: [
+                { path: 'userId', select: 'fullName email mobileNumber gender' },
+                { path: 'doctorId', select: 'name email mobileNumber specializationId degreeId hospitalId appointmentCharge experience' },
+                { path: 'hospitalId', select: 'name email mobileNumber address' }
+            ],
+            sortBy: { _id: -1 }
+        });
+
+        // 4. Group details by appointmentId
+        const detailMap = {};
+        allDetails.forEach(detail => {
+            const appId = detail.appointmentId?.toString();
+            if (!detailMap[appId]) detailMap[appId] = [];
+            detailMap[appId].push(detail);
+        });
+
+        // 5. Merge appointment with its details
+        const mergedAppointments = appointments.map(app => ({
+            ...app.toObject(),
+            appointmentDetails: detailMap[app._id.toString()] || []
+        }));
+
+        return res.status(200).json({
+            success: true,
+            message: 'Appointments fetched successfully',
+            totalRecords,
+            data: mergedAppointments
         });
 
     } catch (error) {
@@ -700,7 +777,8 @@ module.exports = {
     getSettings,
     updateAppointmentTimeByType,
     getUserList,
-    deleteAppointment
+    deleteAppointment,
+    getAppointmentsData
 }
 
 
