@@ -50,6 +50,7 @@ router.post('/getappointmentsdata', adminController.getAppointmentsData); // cor
 router.post('/addeditsetting', adminController.addeditSetting); // corrected the route to lowercase
 router.post('/getsettings', adminController.getSettings); // corrected the route to lowercase
 router.post('/updateappointmenttimebytype', adminController.updateAppointmentTimeByType); // corrected the route to lowercase
+router.post('/editappointmentdetails', adminController.editAppointmentDetails); // corrected the route to lowercase
 
 router.post('/adddoctor', adminController.addDoctor); 
 router.post('/getdoctors', adminController.getDoctors); 

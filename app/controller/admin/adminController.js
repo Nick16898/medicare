@@ -849,6 +849,65 @@ const getUserList = async (req, res) => {
     }
 };
 
+// edit appointment Details
+const editAppointmentDetails = async (req, res) => {
+    try {
+        const {
+            appointmentId,
+            appointmentDate,
+            appointmentTime,
+            inTime,
+            outTime,
+            disease,
+            isEmergency
+        } = req.body;
+
+        if (!appointmentId) {
+            return res.status(400).json({
+                success: false,
+                message: 'appointmentId is required'
+            });
+        }
+
+        // Find the appointmentDetail
+        const appointmentDetail = await appointmentdetailModel.findOne({
+            delete: false,
+            appointmentId: appointmentId
+        });
+
+        if (!appointmentDetail) {
+            return errorResponse(res, 'Appointment detail not found');
+        }
+
+
+
+        // Update the record
+        const updatedDetail = await appointmentdetailModel.findByIdAndUpdate(
+            appointmentDetail._id,
+            {
+                $set: {
+                    appointmentId,
+                    appointmentDate,
+                    appointmentTime,
+                    inTime,
+                    outTime,
+                    disease,
+                    isEmergency,
+                    update: new Date()
+                }
+            },
+            { new: true }
+        );
+
+        return successResponse(res, 'Appointment detail updated successfully', updatedDetail);
+
+    } catch (error) {
+        console.error('Error updating appointment detail:', error);
+        return errorResponse(res, 'Error updating appointment detail');
+
+    }
+};
+
 
 
 module.exports = {
@@ -867,7 +926,8 @@ module.exports = {
     updateAppointmentTimeByType,
     getUserList,
     deleteAppointment,
-    getAppointmentsData
+    getAppointmentsData,
+    editAppointmentDetails
 }
 
 
