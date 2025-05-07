@@ -22,6 +22,7 @@ const doctorSchema = new mongoose.Schema({
     create: { type: Date, default: Date.now },
     update: { type: Date, default: Date.now },
     delete: { type: Boolean, default: false },
+    isAvailable: { type: Boolean, default: true },
 });
 
 const doctor = mongoose.model('doctor', doctorSchema);

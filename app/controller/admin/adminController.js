@@ -1,3 +1,4 @@
+const moment = require('moment');
 const express = require('express');
 const multer = require('multer');
 const path = require('path');
@@ -10,6 +11,7 @@ const hospitalModel = require('../../model/hospital');
 const doctorModel = require('../../model/doctor');
 const settingModel = require('../../model/setting');
 const userModel = require('../../model/user');
+const checkOutModel = require('../../model/checkout');
 
 const { successResponse, errorResponse, saveModel, selectdata, selectdatv2, updateModel, selectdatawithjoin } = require('../../helper/index');
 
@@ -430,16 +432,20 @@ const addAppointment = async (req, res) => {
         if (!mobilenumber) {
             return errorResponse(res, 'Mobile number is required');
         }
-        // if (!/^\d{10}$/.test(mobilenumber)) {
-        //     return errorResponse(res, 'Mobile number must be exactly 10 digits');
-        // }
+        if (appointmentDate) {
+            return errorResponse(res, 'Mobile number must be exactly 10 digits');
+        }
+
+        // valide date format YYYY-MM-DD using Date
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(appointmentDate)) {
+            return errorResponse(res, 'Invalid date format. Please use YYYY-MM-DD.');
+        }
+
 
         let durationData = await selectdatv2(settingModel, { key: "Duration" }, "value");
 
         let checkMobileNumber = await userModel.findOne({ mobileNumber: mobilenumber, delete: false });
-        console.log('====================================');
-        console.log(!checkMobileNumber);
-        console.log('====================================');
+
         if (!checkMobileNumber) {
             // Add user if not exist
             let userField = {
@@ -447,20 +453,23 @@ const addAppointment = async (req, res) => {
                 mobileNumber: mobilenumber,
             };
             let user = await saveModel(userModel, userField);
-            console.log('====================================');
-            console.log(user);
-            console.log('====================================');
+
             userId = user._id;
         } else {
             userId = checkMobileNumber._id;
         }
-
+        // check doctor detail
+        let checkDoc = await doctorModel.find({ delete: false, _id: doctorId, isAvailable: false })
+        if (checkDoc.length == 0) {
+            return errorResponse(res, 'Doctor is Not Available');
+        }
         // Create appointment
         let appointmentfield = {
             userId,
             mobileNumber: mobilenumber,
             fullName,
             hospitalId,
+            doctorId,
             create: new Date(),
         };
         const savedAppointment = await saveModel(appointmentModel, appointmentfield);
@@ -475,7 +484,7 @@ const addAppointment = async (req, res) => {
             userId,
             disease,
             duration: durationData.data[0]?.value || "",
-            doctorId,
+
             appointmentTime,
             appointmentDate,
             isEmergency,
@@ -495,9 +504,238 @@ const addAppointment = async (req, res) => {
     }
 };
 
+// const addAppointmentV2 = async (req, res) => {
+//     let {
+//         userId,
+//         mobilenumber,
+//         fullName = "",
+//         doctorId = "",
+//         hospitalId,
+//         appointmentuserId = "",
+//         duration = "",
+//         disease = "",
+//         appointmentDate = "",
+//         appointmentTime = "",
+//         isEmergency = false,
+//     } = req.body;
+
+//     try {
+//         // 🛑 Validation: required fields
+//         if (!fullName) return errorResponse(res, 'Full name is required');
+//         if (!mobilenumber) return errorResponse(res, 'Mobile number is required');
+//         if (!appointmentDate || !appointmentTime) return errorResponse(res, 'Appointment date and time are required');
+
+//         // ✅ Validate date format: YYYY-MM-DD
+//         if (!/^\d{4}-\d{2}-\d{2}$/.test(appointmentDate)) {
+//             return errorResponse(res, 'Invalid date format. Use YYYY-MM-DD');
+//         }
+
+//         // ✅ Validate time format: HH:mm:ss
+//         if (!/^([01]\d|2[0-3]):([0-5]\d):([0-5]\d)$/.test(appointmentTime)) {
+//             return errorResponse(res, 'Invalid time format. Use HH:mm:ss');
+//         }
+
+//         // ✅ Get duration value from settings
+//         const durationData = await selectdatv2(settingModel, { key: "Duration" }, "value");
+//         const finalDuration = parseInt(durationData.data[0]?.value || "30");
+
+//         // ✅ Check if user exists
+//         let checkMobileNumber = await userModel.findOne({ mobileNumber: mobilenumber, delete: false });
+//         if (!checkMobileNumber) {
+//             let userField = {
+//                 fullName,
+//                 mobileNumber: mobilenumber,
+//             };
+//             let user = await saveModel(userModel, userField);
+//             userId = user._id;
+//         } else {
+//             userId = checkMobileNumber._id;
+//         }
+
+//         // ✅ Parse requested appointment time
+//         const newStartTime = new Date(`${appointmentDate}T${appointmentTime}`);
+//         const newEndTime = new Date(newStartTime.getTime() + finalDuration * 60000);
+
+//         // ✅ Fetch existing appointments for that doctor & date
+//         const existingAppointments = await appointmentdetailModel.find({
+//             appointmentDate,
+//             doctorId,
+//             delete: false,
+//         });
+
+//         const hasConflict = existingAppointments.some(existing => {
+//             const existingStart = new Date(`${existing.appointmentDate}T${existing.appointmentTime}`);
+//             const existingDuration = parseInt(existing.duration || "30");
+//             const existingEnd = new Date(existingStart.getTime() + existingDuration * 60000);
+
+//             return newStartTime < existingEnd && newEndTime > existingStart;
+//         });
+
+//         if (hasConflict) {
+//             return errorResponse(res, 'This time slot is already booked for the doctor.');
+//         }
+
+//         // ✅ Create appointment
+//         let appointmentField = {
+//             userId,
+//             mobileNumber: mobilenumber,
+//             fullName,
+//             hospitalId,
+//             create: new Date(),
+//         };
+
+//         const savedAppointment = await saveModel(appointmentModel, appointmentField);
+//         if (!savedAppointment) {
+//             return errorResponse(res, 'Error creating appointment');
+//         }
+
+//         // ✅ Create appointment detail
+//         let appointmentDetailField = {
+//             create: new Date(),
+//             userId,
+//             disease,
+//             duration: finalDuration.toString(),
+//             doctorId,
+//             appointmentTime,
+//             appointmentDate,
+//             isEmergency,
+//             appointmentId: savedAppointment._id,
+//         };
+
+//         if (appointmentuserId) {
+//             appointmentDetailField.appointmentuserId = appointmentuserId;
+//         }
+
+//         await saveModel(appointmentdetailModel, appointmentDetailField);
+
+//         return successResponse(res, 'Appointment created successfully', []);
+//     } catch (error) {
+//         console.error('Error adding appointment:', error);
+//         return errorResponse(res, 'Error adding appointment');
+//     }
+// };
+
+
+
 
 
 // delete appointment
+
+// controllers/appointmentController.js
+
+// const userModel = require('../models/user');
+// const appointmentModel = require('../models/appointment');
+// const appointmentdetailModel = require('../models/appointmentdetail');
+// const settingModel = require('../models/setting');
+// const { saveModel, selectdatv2 } = require('../helpers/dbHelper');
+// const { successResponse, errorResponse } = require('../helpers/responseHelper');
+
+// controllers/appointmentController.js
+
+
+const addAppointmentV2 = async (req, res) => {
+    let {
+        userId,
+        mobilenumber,
+        fullName = "",
+        doctorId = "",
+        hospitalId,
+        appointmentuserId = "",
+        disease = "",
+        appointmentDate = "",
+        appointmentTime = "",
+        isEmergency = false
+    } = req.body;
+
+    try {
+        // Validation
+        if (!fullName) return errorResponse(res, 'Full name is required');
+        if (!mobilenumber) return errorResponse(res, 'Mobile number is required');
+        if (!appointmentDate || !appointmentTime || !doctorId) {
+            return errorResponse(res, 'Doctor, appointment date, and time are required');
+        }
+
+        // Get duration from settings
+        let durationData = await selectdatv2(settingModel, { key: "Duration" }, "value");
+        let durationValue = parseInt(durationData?.data?.[0]?.value || "0");
+
+        // Calculate time range
+        const startTime = moment(`${appointmentDate} ${appointmentTime}`, "YYYY-MM-DD HH:mm");
+        const endTime = moment(startTime).add(durationValue, 'minutes');
+
+        // Check for overlapping appointments
+        const overlappingAppointment = await appointmentdetailModel.findOne({
+            doctorId,
+            appointmentDate,
+            delete: false,
+            appointmentTime: {
+                $gte: startTime.format("HH:mm"),
+                $lt: endTime.format("HH:mm")
+            }
+        });
+
+        if (overlappingAppointment) {
+            return errorResponse(res, 'Selected time slot is already booked.');
+        }
+
+        // Check or create user
+        let checkMobileNumber = await userModel.findOne({ mobileNumber: mobilenumber, delete: false });
+        if (!checkMobileNumber) {
+            const user = await saveModel(userModel, {
+                fullName,
+                mobileNumber: mobilenumber,
+            });
+            userId = user._id;
+        } else {
+            userId = checkMobileNumber._id;
+        }
+
+        // Create appointment
+        const appointmentField = {
+            userId,
+            mobileNumber: mobilenumber,
+            fullName,
+            hospitalId,
+            create: new Date()
+        };
+        const savedAppointment = await saveModel(appointmentModel, appointmentField);
+
+        if (!savedAppointment) {
+            return errorResponse(res, 'Error creating appointment');
+        }
+
+        // Build appointment detail data
+        const appointmentDetailField = {
+            userId,
+            disease,
+            doctorId,
+            duration: `${durationValue}`,
+            appointmentDate,
+            appointmentTime,
+            isEmergency,
+            appointmentId: savedAppointment._id,
+            create: new Date()
+        };
+
+        // Only add appointmentuserId if it's valid
+        if (appointmentuserId && mongoose.Types.ObjectId.isValid(appointmentuserId)) {
+            appointmentDetailField.appointmentuserId = appointmentuserId;
+        }
+
+        await saveModel(appointmentdetailModel, appointmentDetailField);
+
+        return successResponse(res, 'Appointment created successfully', []);
+    } catch (error) {
+        console.error('Error in addAppointmentV2:', error);
+        return errorResponse(res, 'Error adding appointment');
+    }
+};
+
+
+
+
+
+
 const deleteAppointment = async (req, res) => {
     const { appointmentId } = req.body;
     try {
@@ -542,7 +780,14 @@ const getAppointmentsWithDetails = async (req, res) => {
     try {
         const { appointmentId } = req.query;
 
-        let appointmentFilter = { delete: false };
+        // Get start of today (00:00:00)
+        const startOfToday = moment().startOf('day').toDate();
+        let appointmentFilter = {
+            delete: false,
+            appointmentDate: {
+                $gte: startOfToday
+            }
+        };
         if (appointmentId) {
             appointmentFilter._id = appointmentId;
         }
@@ -633,12 +878,12 @@ const getAppointmentsData = async (req, res) => {
             sortBy: { _id: -1 }
         });
 
-        if (appointments.length === 0) {
-            return res.status(404).json({
-                success: false,
-                message: 'No appointments found',
-            });
-        }
+        // if (appointments.length === 0) {
+        //     return res.status(404).json({
+        //         success: false,
+        //         message: 'No appointments found',
+        //     });
+        // }
 
         // 2. Get all appointment IDs
         const appointmentIds = appointments.map(app => app._id);
@@ -909,6 +1154,104 @@ const editAppointmentDetails = async (req, res) => {
 };
 
 
+const checkoutDoctorUpdate = async (req, res) => {
+    try {
+        const { doctorId, type, reason } = req.body;
+
+        if (!doctorId) {
+            return res.status(400).json({
+                success: false,
+                message: 'doctorId is required'
+            });
+        }
+
+        // Find the doctor
+        const appointmentDetail = await doctorModel.findOne({
+            delete: false,
+            _id: doctorId
+        });
+
+        if (!appointmentDetail) {
+            return errorResponse(res, 'Doctor detail not found');
+        }
+
+
+
+        // Update the record
+        if (type == "START") {
+            let obj = { doctorId: doctorId, startTime: moment(), reason }
+            await saveModel(checkOutModel, obj);
+
+        } else if (type == "END") {
+
+            let data = await checkOutModel.find({ doctorId: doctorId })
+                .sort({ createdAt: -1 })  // sort newest first
+                .limit(1);
+            if (data.length != 0) {
+
+                const updatedDetail = await checkOutModel.findByIdAndUpdate(
+                    data[0]['_id'],
+                    {
+                        $set: {
+                            endTime: new Date()
+                        }
+                    },
+                    { new: true }
+                );
+            } else {
+                return errorResponse(res, 'Doctor not found checkout entry');
+            }
+        }
+
+
+        return successResponse(res, 'successfully', []);
+
+    } catch (error) {
+        console.error('Error updating appointment detail:', error);
+        return errorResponse(res, 'Error updating appointment detail');
+
+    }
+};
+
+const doctorUpdateAvailable = async (req, res) => {
+    try {
+        const { doctorId, isAvailable=true } = req.body;
+
+        if (!doctorId) {
+            return res.status(400).json({
+                success: false,
+                message: 'doctorId is required'
+            });
+        }
+
+        // Find the doctor
+        const appointmentDetail = await doctorModel.findOne({
+            delete: false,
+            _id: doctorId
+        });
+
+        if (!appointmentDetail) {
+            return errorResponse(res, 'Doctor detail not found');
+        }
+
+            const updatedDetail = await doctorModel.findByIdAndUpdate(
+                doctorId,
+                {
+                    $set: {
+                        isAvailable: isAvailable
+                    }
+                },
+                { new: true }
+            );
+
+        return successResponse(res, 'successfully', []);
+
+    } catch (error) {
+        console.error('Error updating appointment detail:', error);
+        return errorResponse(res, 'Error updating appointment detail');
+
+    }
+};
 
 module.exports = {
     test,
@@ -916,6 +1259,7 @@ module.exports = {
     login,
     adminProfile,
     addAppointment,
+    addAppointmentV2,
     addHospital,
     getHospitals,
     addDoctor,
@@ -927,7 +1271,9 @@ module.exports = {
     getUserList,
     deleteAppointment,
     getAppointmentsData,
-    editAppointmentDetails
+    editAppointmentDetails,
+    checkoutDoctorUpdate,
+    doctorUpdateAvailable
 }
 
 

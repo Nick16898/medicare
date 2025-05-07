@@ -35,7 +35,6 @@ const mongoose = require('mongoose');
 
 const userSchema = new mongoose.Schema({
     fullName: { type: String, required: false },
-    // email: { type: String, required:false }, // ✅ FIXED
     password: { type: String, required: false },
     mobileNumber: { type: String, required: false },
     dob: { type: Date, required: false },

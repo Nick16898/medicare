@@ -2,7 +2,10 @@
 const mongoose = require('mongoose');
 
 // Replace this with your MongoDB URI
-const uri = 'mongodb+srv://snselftech:rDa9TicNjJJVCZcD@selftech.7ie4n.mongodb.net/?retryWrites=true&w=majority&appName=selftech/test'; // or your remote URI
+const uri = 'mongodb+srv://snselftech:rDa9TicNjJJVCZcD@selftech.7ie4n.mongodb.net/?retryWrites=true&w=majority&appName=selftech/medicare'; // or your remote URI
+
+// const uri = 'mongodb://localhost:27017/medicare'; // or your remote URI
+
 
 async function connectToMongo() {
     try {

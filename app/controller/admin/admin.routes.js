@@ -43,6 +43,7 @@ router.post('/addhospital', adminController.addHospital); // corrected the route
 router.post('/gethospitals', adminController.getHospitals); // corrected the route to lowercase
 
 router.post('/addappointment', adminController.addAppointment);
+router.post('/addappointmentv2', adminController.addAppointmentV2);
 router.post('/deleteappointment', adminController.deleteAppointment);
 router.post('/getappointmentswithdetails', adminController.getAppointmentsWithDetails); // corrected the route to lowercase
 router.post('/getappointmentsdata', adminController.getAppointmentsData); // corrected the route to lowercase
@@ -56,4 +57,6 @@ router.post('/adddoctor', adminController.addDoctor);
 router.post('/getdoctors', adminController.getDoctors); 
 router.post('/getuserlist', adminController.getUserList); 
 
+router.post('/checkoutDoctorUpdate', adminController.checkoutDoctorUpdate); 
+router.post('/doctorUpdateAvailable', adminController.doctorUpdateAvailable); 
 module.exports = router;
