@@ -39,7 +39,7 @@ router.post('/login', validate(adminValidation.login), adminController.login);
 router.post('/adminprofile', adminController.adminProfile);
 
 
-router.post('/addhospital', adminController.addHospital); // corrected the route to lowercase
+router.post('/addhospital',  uploadProfile.fields([{ name: 'profile'},{name:'images'}]),adminController.addHospital); // corrected the route to lowercase
 router.post('/gethospitals', adminController.getHospitals); // corrected the route to lowercase
 
 router.post('/addappointment', adminController.addAppointment);

@@ -180,7 +180,7 @@ const selectdatawithjoin = async (options) => {
             .select(fields)
             .limit(limit)
             .skip(offset)
-            .sort(sortBy);
+            .sort(sortBy).lean();
 
         // Apply population if provided
         if (joinModel) {
@@ -222,20 +222,24 @@ const updateModel = async (Model, conditions, update) => {
 
 
 /**
- * Middleware to validate request using Joi schema.
- * @param {Object} schema - Joi validation schema.
- * @param {string} property - Request property to validate ('body', 'query', 'params').
+ * validate middleware function to validate the request body against a provided schema.
+ * - Validates the request body using the provided Joi schema.
+ * - If validation fails, returns an error response with the validation error message.
+ * - If validation passes, calls the next middleware function.
+ *
+ * @param {Object} schema - The Joi schema to validate the request body.
+ * @returns {Function} Middleware function that validates the request body.
  */
-const validate = (schema, property = 'body') => {
-    return (req, res, next) => {
-        const { error } = schema.validate(req[property], { abortEarly: false });
-        if (error) {
-            const errors = error.details.map(err => err.message);
-            return res.status(400).json({ error: 'Validation Error', details: errors });
-        }
-        next();
-    };
-};
+const validate = schema => (req, res, next) => {
+    const { error } = schema.validate(req.body)
+    if (error) {
+      const message = error.details.map(i => i.message).join(',')
+      console.log('error', message)
+      errorResponse(res, message)
+    } else {
+      next()
+    }
+  }
 
 module.exports = {
     successResponse,

@@ -11,6 +11,7 @@ const hospitalSchema = new mongoose.Schema({
     address: { type: String, required: false },
     latitude: { type: String, required: false },
     longitude: { type: String, required: false },
+    profile: { type: String, default:null },
 
     create: { type: Date, default: Date.now },
     update: { type: Date, default: Date.now },

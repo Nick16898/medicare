@@ -12,6 +12,7 @@ const doctorModel = require('../../model/doctor');
 const settingModel = require('../../model/setting');
 const userModel = require('../../model/user');
 const checkOutModel = require('../../model/checkout');
+const mediaModel = require('../../model/media');
 
 const { successResponse, errorResponse, saveModel, selectdata, selectdatv2, updateModel, selectdatawithjoin } = require('../../helper/index');
 
@@ -130,7 +131,9 @@ const adminProfile = async (req, res) => {
 const addHospital = async (req, res) => {
     try {
         const { ownerName, socialMediaLinks = '', name = '', email, mobileNumber = '', address = '', latitude = '', longitude = '' } = req.body;
-
+        let profile = req.files['profile'] || []
+        let images = req.files['images'] || []
+        
         // Check if a hospital with the same email already exists
         const existingHospital = await hospitalModel.findOne({ email });
         if (existingHospital) {
@@ -138,8 +141,17 @@ const addHospital = async (req, res) => {
         }
 
         const hospitalData = { ownerName, socialMediaLinks, name, email, mobileNumber, address, latitude, longitude };
-
+        if(profile.length != 0){
+            hospitalData['profile'] = profile[0]['filename']
+        }
         const newHospital = await hospitalModel.create(hospitalData);
+        
+        // image store
+        for (let m = 0; m < images.length; m++) {
+         await mediaModel.create({image:images[m]['filename'],type:'HOSPITAL',typeId:newHospital['_id']});
+            
+        }
+
         return successResponse(res, 'Hospital created successfully', newHospital);
 
     } catch (err) {
@@ -233,6 +245,12 @@ const getHospitals = async (req, res) => {
                 offset: parseInt(offset),
                 sortBy: { create: -1 }
             });
+
+            for (let h = 0; h < hospitals.length; h++) {
+                
+                let img = await mediaModel.find({delete:false,type:'HOSPITAL',typeId:hospitals[h]['_id']})
+                hospitals[h]['media'] = img
+            }
 
             return successResponse(res, 'Hospitals fetched successfully', {
                 totalRecords,
@@ -1226,6 +1244,40 @@ const doctorUpdateAvailable = async (req, res) => {
 
         // Find the doctor
         const appointmentDetail = await doctorModel.findOne({
+            delete: false,
+            _id: doctorId
+        });
+
+        if (!appointmentDetail) {
+            return errorResponse(res, 'Doctor detail not found');
+        }
+
+            const updatedDetail = await doctorModel.findByIdAndUpdate(
+                doctorId,
+                {
+                    $set: {
+                        isAvailable: isAvailable
+                    }
+                },
+                { new: true }
+            );
+
+        return successResponse(res, 'successfully', []);
+
+    } catch (error) {
+        console.error('Error updating appointment detail:', error);
+        return errorResponse(res, 'Error updating appointment detail');
+
+    }
+};
+
+const hospitalView = async (req, res) => {
+
+    try {
+        const { hospitalId,limit,offset,text } = req.body;
+
+        // Find the doctor
+        const appointmentDetail = await hospitalModel.findOne({
             delete: false,
             _id: doctorId
         });
