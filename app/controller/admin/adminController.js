@@ -133,7 +133,7 @@ const addHospital = async (req, res) => {
         const { ownerName, socialMediaLinks = '', name = '', email, mobileNumber = '', address = '', latitude = '', longitude = '' } = req.body;
         let profile = req.files['profile'] || []
         let images = req.files['images'] || []
-        
+
         // Check if a hospital with the same email already exists
         const existingHospital = await hospitalModel.findOne({ email });
         if (existingHospital) {
@@ -141,15 +141,15 @@ const addHospital = async (req, res) => {
         }
 
         const hospitalData = { ownerName, socialMediaLinks, name, email, mobileNumber, address, latitude, longitude };
-        if(profile.length != 0){
+        if (profile.length != 0) {
             hospitalData['profile'] = profile[0]['filename']
         }
         const newHospital = await hospitalModel.create(hospitalData);
-        
+
         // image store
         for (let m = 0; m < images.length; m++) {
-         await mediaModel.create({image:images[m]['filename'],type:'HOSPITAL',typeId:newHospital['_id']});
-            
+            await mediaModel.create({ image: images[m]['filename'], type: 'HOSPITAL', typeId: newHospital['_id'] });
+
         }
 
         return successResponse(res, 'Hospital created successfully', newHospital);
@@ -247,8 +247,8 @@ const getHospitals = async (req, res) => {
             });
 
             for (let h = 0; h < hospitals.length; h++) {
-                
-                let img = await mediaModel.find({delete:false,type:'HOSPITAL',typeId:hospitals[h]['_id']})
+
+                let img = await mediaModel.find({ delete: false, type: 'HOSPITAL', typeId: hospitals[h]['_id'] })
                 hospitals[h]['media'] = img
             }
 
@@ -451,7 +451,7 @@ const addAppointment = async (req, res) => {
             return errorResponse(res, 'Mobile number is required');
         }
         if (!appointmentDate) {
-                       return errorResponse(res, 'Appointment date is required');
+            return errorResponse(res, 'Appointment date is required');
         }
 
         // valide date format YYYY-MM-DD using Date
@@ -478,9 +478,11 @@ const addAppointment = async (req, res) => {
         }
         // check doctor detail
         let checkDoc = await doctorModel.find({ delete: false, _id: doctorId, isAvailable: false })
-        if (checkDoc.length == 0) {
+
+        if (checkDoc.length < 0) {
             return errorResponse(res, 'Doctor is Not Available');
         }
+
         // Create appointment
         let appointmentfield = {
             userId,
@@ -836,11 +838,11 @@ const getAppointmentsWithDetails = async (req, res) => {
             //     success: false,
             //     message: 'No appointment details found',
             // });
-             return res.status(200).json({
-            success: true,
-            message: 'Appointments fetched successfully',
-            data: []
-        });
+            return res.status(200).json({
+                success: true,
+                message: 'Appointments fetched successfully',
+                data: []
+            });
         }
 
         // 2. Group by appointmentId
@@ -1238,7 +1240,7 @@ const checkoutDoctorUpdate = async (req, res) => {
 
 const doctorUpdateAvailable = async (req, res) => {
     try {
-        const { doctorId, isAvailable=true } = req.body;
+        const { doctorId, isAvailable = true } = req.body;
 
         if (!doctorId) {
             return res.status(400).json({
@@ -1257,15 +1259,15 @@ const doctorUpdateAvailable = async (req, res) => {
             return errorResponse(res, 'Doctor detail not found');
         }
 
-            const updatedDetail = await doctorModel.findByIdAndUpdate(
-                doctorId,
-                {
-                    $set: {
-                        isAvailable: isAvailable
-                    }
-                },
-                { new: true }
-            );
+        const updatedDetail = await doctorModel.findByIdAndUpdate(
+            doctorId,
+            {
+                $set: {
+                    isAvailable: isAvailable
+                }
+            },
+            { new: true }
+        );
 
         return successResponse(res, 'successfully', []);
 
@@ -1279,7 +1281,7 @@ const doctorUpdateAvailable = async (req, res) => {
 const hospitalView = async (req, res) => {
 
     try {
-        const { hospitalId,limit,offset,text } = req.body;
+        const { hospitalId, limit, offset, text } = req.body;
 
         // Find the doctor
         const appointmentDetail = await hospitalModel.findOne({
@@ -1291,15 +1293,15 @@ const hospitalView = async (req, res) => {
             return errorResponse(res, 'Doctor detail not found');
         }
 
-            const updatedDetail = await doctorModel.findByIdAndUpdate(
-                doctorId,
-                {
-                    $set: {
-                        isAvailable: isAvailable
-                    }
-                },
-                { new: true }
-            );
+        const updatedDetail = await doctorModel.findByIdAndUpdate(
+            doctorId,
+            {
+                $set: {
+                    isAvailable: isAvailable
+                }
+            },
+            { new: true }
+        );
 
         return successResponse(res, 'successfully', []);
 
