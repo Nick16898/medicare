@@ -832,10 +832,15 @@ const getAppointmentsWithDetails = async (req, res) => {
         });
 
         if (appointmentDetails.length === 0) {
-            return res.status(404).json({
-                success: false,
-                message: 'No appointment details found',
-            });
+            // return res.status(404).json({
+            //     success: false,
+            //     message: 'No appointment details found',
+            // });
+             return res.status(200).json({
+            success: true,
+            message: 'Appointments fetched successfully',
+            data: []
+        });
         }
 
         // 2. Group by appointmentId
