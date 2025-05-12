@@ -450,7 +450,7 @@ const addAppointment = async (req, res) => {
         if (!mobilenumber) {
             return errorResponse(res, 'Mobile number is required');
         }
-        if (appointmentDate) {
+        if (!appointmentDate) {
                        return errorResponse(res, 'Appointment date is required');
         }
 
