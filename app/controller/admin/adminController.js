@@ -451,7 +451,7 @@ const addAppointment = async (req, res) => {
             return errorResponse(res, 'Mobile number is required');
         }
         if (appointmentDate) {
-            return errorResponse(res, 'Mobile number must be exactly 10 digits');
+                       return errorResponse(res, 'Appointment date is required');
         }
 
         // valide date format YYYY-MM-DD using Date
