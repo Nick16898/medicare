@@ -134,12 +134,6 @@ const addHospital = async (req, res) => {
         const { ownerName, socialMediaLinks = '', name = '', email, mobileNumber = '', address = '', latitude = '', longitude = '',content='[]' } = req.body;
         let profile = req.files['profile'] || []
         let images = req.files['images'] || []
-<<<<<<< HEAD
-        let contentJson = JSON.parse(content) || []
-        
-=======
-
->>>>>>> 0212f9a0c2b80fc54a93c41fd4ac6b7d8de44d24
         // Check if a hospital with the same email already exists
         const existingHospital = await hospitalModel.findOne({ email });
         if (existingHospital) {
@@ -154,20 +148,8 @@ const addHospital = async (req, res) => {
 
         // image store
         for (let m = 0; m < images.length; m++) {
-<<<<<<< HEAD
-            await mediaModel.create({image:images[m]['filename'],type:'HOSPITAL',typeId:newHospital['_id']});     
-        }
-        
-        for (let c = 0; c < contentJson.length; c++) {
-            
-            let saveObj = { image: contentJson[c]['image'], title:contentJson[c]['title'],description:contentJson[c]['description'], hospitalId: newHospital['_id'] }
-            let saveContent = await contentModel.create(saveObj);
-            console.log('-----',saveContent);
- 
-=======
             await mediaModel.create({ image: images[m]['filename'], type: 'HOSPITAL', typeId: newHospital['_id'] });
 
->>>>>>> 0212f9a0c2b80fc54a93c41fd4ac6b7d8de44d24
         }
 
         return successResponse(res, 'Hospital created successfully', newHospital);
