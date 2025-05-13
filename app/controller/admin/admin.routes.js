@@ -59,4 +59,5 @@ router.post('/getuserlist', adminController.getUserList);
 
 router.post('/checkoutDoctorUpdate', adminController.checkoutDoctorUpdate); 
 router.post('/doctorUpdateAvailable', adminController.doctorUpdateAvailable); 
+router.post('/imageUpload', uploadProfile.fields([{name:'images'}]), adminController.imageUpload); 
 module.exports = router;

@@ -13,6 +13,7 @@ const settingModel = require('../../model/setting');
 const userModel = require('../../model/user');
 const checkOutModel = require('../../model/checkout');
 const mediaModel = require('../../model/media');
+const contentModel = require('../../model/content');
 
 const { successResponse, errorResponse, saveModel, selectdata, selectdatv2, updateModel, selectdatawithjoin } = require('../../helper/index');
 
@@ -130,16 +131,17 @@ const adminProfile = async (req, res) => {
 // add hostpital
 const addHospital = async (req, res) => {
     try {
-        const { ownerName, socialMediaLinks = '', name = '', email, mobileNumber = '', address = '', latitude = '', longitude = '' } = req.body;
+        const { ownerName, socialMediaLinks = '', name = '', email, mobileNumber = '', address = '', latitude = '', longitude = '',content='[]' } = req.body;
         let profile = req.files['profile'] || []
         let images = req.files['images'] || []
+        let contentJson = JSON.parse(content) || []
         
         // Check if a hospital with the same email already exists
         const existingHospital = await hospitalModel.findOne({ email });
         if (existingHospital) {
             return errorResponse(res, 'Hospital with this email already exists');
         }
-
+        
         const hospitalData = { ownerName, socialMediaLinks, name, email, mobileNumber, address, latitude, longitude };
         if(profile.length != 0){
             hospitalData['profile'] = profile[0]['filename']
@@ -148,11 +150,34 @@ const addHospital = async (req, res) => {
         
         // image store
         for (let m = 0; m < images.length; m++) {
-         await mediaModel.create({image:images[m]['filename'],type:'HOSPITAL',typeId:newHospital['_id']});
+            await mediaModel.create({image:images[m]['filename'],type:'HOSPITAL',typeId:newHospital['_id']});     
+        }
+        
+        for (let c = 0; c < contentJson.length; c++) {
             
+            let saveObj = { image: contentJson[c]['image'], title:contentJson[c]['title'],description:contentJson[c]['description'], hospitalId: newHospital['_id'] }
+            let saveContent = await contentModel.create(saveObj);
+            console.log('-----',saveContent);
+ 
         }
 
         return successResponse(res, 'Hospital created successfully', newHospital);
+
+    } catch (err) {
+        console.error('Error creating hospital:', err);
+        return errorResponse(res, 'Error creating hospital');
+    }
+};
+
+// imageUpload
+const imageUpload = async (req, res) => {
+    try {
+        
+        let images = req.files['images'] || []
+        let obj = images
+        obj['profile'] = images[0]['filename']
+    
+        return successResponse(res, 'successfully', obj);
 
     } catch (err) {
         console.error('Error creating hospital:', err);
@@ -250,6 +275,9 @@ const getHospitals = async (req, res) => {
                 
                 let img = await mediaModel.find({delete:false,type:'HOSPITAL',typeId:hospitals[h]['_id']})
                 hospitals[h]['media'] = img
+
+                let contentArr = await contentModel.find({delete:false,hospitalId:hospitals[h]['_id']})
+                hospitals[h]['contentDetails'] = contentArr
             }
 
             return successResponse(res, 'Hospitals fetched successfully', {
@@ -1330,7 +1358,8 @@ module.exports = {
     getAppointmentsData,
     editAppointmentDetails,
     checkoutDoctorUpdate,
-    doctorUpdateAvailable
+    doctorUpdateAvailable,
+    imageUpload
 }
 
 
