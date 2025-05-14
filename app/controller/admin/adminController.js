@@ -815,7 +815,7 @@ const deleteAppointment = async (req, res) => {
 }
 
 // get appointments with details
-const getAppointmentsWithDetails = async (req, res) => {
+const getAppointmentsWithDetailsOld = async (req, res) => {
     try {
         const { appointmentId } = req.query;
 
@@ -888,6 +888,83 @@ const getAppointmentsWithDetails = async (req, res) => {
         const result = Object.values(groupedAppointments);
 
         // 3. Send success response
+        return res.status(200).json({
+            success: true,
+            message: 'Appointments fetched successfully',
+            data: result
+        });
+
+    } catch (error) {
+        console.error('Error fetching appointments:', error);
+        return res.status(500).json({
+            success: false,
+            message: 'Something went wrong while fetching appointments'
+        });
+    }
+};
+
+const getAppointmentsWithDetails = async (req, res) => {
+    try {
+        const { appointmentId } = req.query;
+
+        // Get start of today (00:00:00) as string
+        const startOfToday = moment().format('YYYY-MM-DD');
+        let appointmentFilter = {
+            delete: false,
+            appointmentDate: { $gte: startOfToday } // string comparison works for YYYY-MM-DD
+        };
+        if (appointmentId) {
+            appointmentFilter._id = appointmentId;
+        }
+
+        // Fetch appointmentDetails with populated appointment
+        const { data: appointmentDetails } = await selectdatawithjoin({
+            Model: appointmentdetailModel,
+            condition: appointmentFilter,
+            limit: 100,
+            offset: 0,
+            joinModel: [
+                {
+                    path: 'appointmentId',
+                    select: 'amount payableAmount create userId doctorId hospitalId mobileNumber fullName',
+                    populate: [
+                        { path: 'userId', select: 'fullName email mobileNumber gender' },
+                        { path: 'doctorId', select: 'name email mobileNumber specializationId degreeId hospitalId appointmentCharge experience' },
+                        { path: 'hospitalId', select: 'name email mobileNumber address' }
+                    ]
+                }
+            ],
+            fields: "duration appointmentTime appointmentDate inTime outTime disease isEmergency delete",
+            sortBy: { '_id': -1 },
+        });
+
+        if (appointmentDetails.length === 0) {
+            return res.status(200).json({
+                success: true,
+                message: 'Appointments fetched successfully',
+                data: []
+            });
+        }
+
+        // Group by appointmentId
+        const groupedAppointments = {};
+        appointmentDetails.forEach(detail => {
+            const appointment = detail.appointmentId?._id?.toString();
+            if (!appointment) return;
+            if (!groupedAppointments[appointment]) {
+                groupedAppointments[appointment] = {
+                    ...((detail.appointmentId && typeof detail.appointmentId.toObject === 'function') ? detail.appointmentId.toObject() : detail.appointmentId) || {},
+                    appointmentDetails: []
+                };
+            }
+            groupedAppointments[appointment].appointmentDetails.push({
+                ...detail,
+                appointmentId: undefined
+            });
+        });
+
+        const result = Object.values(groupedAppointments);
+
         return res.status(200).json({
             success: true,
             message: 'Appointments fetched successfully',
@@ -1298,6 +1375,40 @@ const doctorUpdateAvailable = async (req, res) => {
 };
 
 const hospitalView = async (req, res) => {
+
+    try {
+        const { hospitalId, limit, offset, text } = req.body;
+
+        // Find the doctor
+        const appointmentDetail = await hospitalModel.findOne({
+            delete: false,
+            _id: doctorId
+        });
+
+        if (!appointmentDetail) {
+            return errorResponse(res, 'Doctor detail not found');
+        }
+
+        const updatedDetail = await doctorModel.findByIdAndUpdate(
+            doctorId,
+            {
+                $set: {
+                    isAvailable: isAvailable
+                }
+            },
+            { new: true }
+        );
+
+        return successResponse(res, 'successfully', []);
+
+    } catch (error) {
+        console.error('Error updating appointment detail:', error);
+        return errorResponse(res, 'Error updating appointment detail');
+
+    }
+};
+
+const doctorAvailabelEdit = async (req, res) => {
 
     try {
         const { hospitalId, limit, offset, text } = req.body;
