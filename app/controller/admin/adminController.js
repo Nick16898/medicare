@@ -14,6 +14,7 @@ const userModel = require('../../model/user');
 const checkOutModel = require('../../model/checkout');
 const mediaModel = require('../../model/media');
 const contentModel = require('../../model/content');
+const bannerModel = require('../../model/banner');
 
 const { successResponse, errorResponse, saveModel, selectdata, selectdatv2, updateModel, selectdatawithjoin } = require('../../helper/index');
 
@@ -1416,6 +1417,50 @@ const hospitalView = async (req, res) => {
     }
 };
 
+// Save Banner
+const addEditBanner = async (req, res) => {
+    try {
+        const { title ='',bannerId=''} = req.body;
+       
+        let images = req.files['images'] || []
+           
+        let saveObj = { image: images[0]['filename'], title:title }
+        if(bannerId){
+            await bannerModel.findByIdAndUpdate(
+                    bannerId,
+                    {
+                        $set: saveObj
+                    },
+                    { new: true }
+                );
+        }else{
+             await bannerModel.create(saveObj);
+        }
+
+        return successResponse(res, 'Banner Save successfully', {});
+
+    } catch (err) {
+       
+        return errorResponse(res, 'Error creating');
+    }
+};
+
+const bannerView = async (req, res) => {
+
+    try {
+        
+        // Find the banner
+        const bannerArr = await bannerModel.find({delete: false});
+
+        return successResponse(res, 'successfully', bannerArr);
+
+    } catch (error) {
+      
+        return errorResponse(res, 'Erro detail');
+
+    }
+};
+
 module.exports = {
     test,
     addEditAdmin,
@@ -1437,7 +1482,9 @@ module.exports = {
     editAppointmentDetails,
     checkoutDoctorUpdate,
     doctorUpdateAvailable,
-    imageUpload
+    imageUpload,
+    addEditBanner,
+    bannerView
 }
 
 

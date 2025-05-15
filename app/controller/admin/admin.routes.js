@@ -60,4 +60,9 @@ router.post('/getuserlist', adminController.getUserList);
 router.post('/checkoutDoctorUpdate', adminController.checkoutDoctorUpdate); 
 router.post('/doctorUpdateAvailable', adminController.doctorUpdateAvailable); 
 router.post('/imageUpload', uploadProfile.fields([{name:'images'}]), adminController.imageUpload); 
+
+router.post('/bannerSave', uploadProfile.fields([{name:'images'}]), adminController.addEditBanner); 
+router.post('/bannerView', adminController.bannerView); 
+
+
 module.exports = router;
