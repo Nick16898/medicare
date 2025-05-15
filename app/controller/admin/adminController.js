@@ -131,28 +131,34 @@ const adminProfile = async (req, res) => {
 // add hostpital
 const addHospital = async (req, res) => {
     try {
-        const { ownerName, socialMediaLinks = '', name = '', email, mobileNumber = '', address = '', latitude = '', longitude = '', content = '[]' } = req.body;
+        const { ownerName, socialMediaLinks = '', name = '', email, mobileNumber = '', address = '', latitude = '', longitude = '',content='[]' } = req.body;
         let profile = req.files['profile'] || []
         let images = req.files['images'] || []
+        let contentJson = JSON.parse(content) || []
+        
         // Check if a hospital with the same email already exists
         const existingHospital = await hospitalModel.findOne({ email });
         if (existingHospital) {
             return errorResponse(res, 'Hospital with this email already exists');
         }
-
-        const hospitalData = { ownerName, socialMediaLinks, name, email, mobileNumber, address, latitude, longitude, content };
-        if (profile.length != 0) {
+        
+        const hospitalData = { ownerName, socialMediaLinks, name, email, mobileNumber, address, latitude, longitude };
+        if(profile.length != 0){
             hospitalData['profile'] = profile[0]['filename']
         }
         const newHospital = await hospitalModel.create(hospitalData);
-
+        
         // image store
         for (let m = 0; m < images.length; m++) {
-            await mediaModel.create({ image: images[m]['filename'], type: 'HOSPITAL', typeId: newHospital['_id'] });
-
+            await mediaModel.create({image:images[m]['filename'],type:'HOSPITAL',typeId:newHospital['_id']});     
         }
-
-
+        
+        for (let c = 0; c < contentJson.length; c++) {
+            
+            let saveObj = { image: contentJson[c]['image'], title:contentJson[c]['title'],description:contentJson[c]['description'], hospitalId: newHospital['_id'] }
+            let saveContent = await contentModel.create(saveObj);
+           
+        }
 
         return successResponse(res, 'Hospital created successfully', newHospital);
 
