@@ -10,6 +10,7 @@ const doctorSchema = new mongoose.Schema({
     degreeId: { type: String, required: false },
     hospitalId: { type: String, required: false },
     address: { type: String, required: false },
+    content: { type: String, required: false },
 
     appointmentCharge: { type: String, required: false },
 
