@@ -258,7 +258,7 @@ const getHospitals = async (req, res) => {
             const { data: hospitals, totalRecords } = await selectdatawithjoin({
                 Model: hospitalModel,
                 condition,
-                fields: 'ownerName socialMediaLinks name email mobileNumber address profile',
+                fields: 'ownerName socialMediaLinks name email mobileNumber address profile content',
                 limit: parseInt(limit),
                 offset: parseInt(offset),
                 sortBy: { create: -1 }
